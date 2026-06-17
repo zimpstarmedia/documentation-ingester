@@ -79,8 +79,11 @@ Used to run the content-extraction script on the current page in order to read i
 downloads:
 Used to save the generated ZIP file (the Markdown files and index) to the user's Downloads folder.
 
-Host permission / remote code: NONE.
-The extension does not request host permissions beyond activeTab, makes no network requests, and contains no remote code. All processing is local.
+storage:
+Used to pass the list of pages to crawl from the popup to the crawler tab. It stores no personal data and is cleared after each crawl.
+
+Host permissions (optional, requested at runtime):
+The "Crawl whole section" feature opens the pages of the docs site the user is currently on in a background tab and reads them, so it can convert a whole documentation section to Markdown. Access is requested only for that one site, only when the user starts a crawl (never up front), via optional_host_permissions. The extension makes no requests to any third-party server and contains no remote code; all processing is local.
 
 ---
 

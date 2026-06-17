@@ -37,6 +37,38 @@ No build step, no external libraries, fully offline. Manifest V3.
 Tick **"Also include original `.html`"** to additionally save each section's raw
 HTML under a `raw/` subfolder.
 
+## Crawl a whole section (multi-page)
+
+Single-page extraction only sees the page you're on — useless for JavaScript-
+rendered docs behind Cloudflare, where every "page" is one SPA route. The
+**"Crawl whole section (sidebar)"** button solves that:
+
+1. It reads every link in the page's sidebar/navigation.
+2. Opens a checklist in a new tab — pages in the same docs section (e.g. under
+   `/docs/`) are pre-selected; others are flagged "other section".
+3. Asks once for permission to access the site, then drives a **background tab**
+   through each selected URL **using your existing browser session** — so it
+   sails past the same Cloudflare check and logins you've already passed.
+4. Extracts each rendered page and bundles them all, with a master `index.md`,
+   into one ZIP:
+
+```
+<site>.zip
+└── <site>/
+    ├── index.md          ← lists every crawled page with a summary
+    ├── 01-introduction.md
+    ├── 02-quickstart.md
+    └── …                  ← one file per crawled page
+```
+
+Notes:
+- **Page load wait (ms):** background tabs can render slowly. If a page comes
+  back empty, raise this (e.g. 3000) and re-crawl.
+- The crawl uses a single reusable background tab and runs sequentially to stay
+  gentle on the site. It closes the tab when finished.
+- Host access is requested **only for the current site**, and only at crawl
+  time (`optional_host_permissions`).
+
 ## Install (Load Unpacked)
 
 1. Open `chrome://extensions` in Chrome (or Edge: `edge://extensions`).

@@ -186,3 +186,78 @@ export function extractPageSections() {
     return { ok: false, error: String(err && err.message ? err.message : err) };
   }
 }
+
+// Injected into the page to harvest the sidebar/navigation links so the
+// crawler can ingest a whole docs section. Self-contained, JSON-serializable.
+//
+// Returns: { ok, origin, baseSegment, pageTitle, current, links: [{url, text, sameSection}], error }
+export function collectSidebarLinks() {
+  try {
+    const origin = location.origin;
+    const here = location.origin + location.pathname;
+    const segParts = location.pathname.split("/").filter(Boolean);
+    const baseSegment = "/" + (segParts[0] || "");
+
+    // Prefer anchors inside navigation/sidebar containers; fall back to all.
+    const navSelectors = [
+      "nav", "aside", "[role=navigation]",
+      '[class*="sidebar" i]', '[class*="sidenav" i]', '[class*="side-nav" i]',
+      '[class*="menu" i]', '[class*="toc" i]', '[class*="nav" i]',
+      '[id*="sidebar" i]', '[id*="nav" i]', '[data-testid*="sidebar" i]',
+    ];
+    const anchorSet = new Set();
+    navSelectors.forEach((sel) => {
+      try {
+        document.querySelectorAll(sel).forEach((c) => {
+          c.querySelectorAll("a[href]").forEach((a) => anchorSet.add(a));
+        });
+      } catch (e) {}
+    });
+    let anchors = Array.from(anchorSet);
+    const fromNav = anchors.length >= 3;
+    if (!fromNav) anchors = Array.from(document.querySelectorAll("a[href]"));
+
+    const seen = new Set();
+    const links = [];
+    anchors.forEach((a) => {
+      const raw = a.getAttribute("href");
+      if (!raw) return;
+      let url;
+      try { url = new URL(raw, location.href); } catch (e) { return; }
+      if (url.protocol !== "http:" && url.protocol !== "https:") return;
+      if (url.origin !== origin) return; // same-site only
+      // Skip obvious asset/file links.
+      if (/\.(png|jpe?g|gif|svg|webp|pdf|zip|css|js|json|xml|ico|woff2?)$/i.test(url.pathname)) return;
+      const key = url.pathname + url.search;
+      if (seen.has(key)) return;
+      seen.add(key);
+      const text = (a.textContent || "").trim().replace(/\s+/g, " ").slice(0, 140);
+      links.push({
+        url: url.origin + url.pathname + url.search,
+        text: text || url.pathname,
+        sameSection: url.pathname === baseSegment || url.pathname.startsWith(baseSegment + "/"),
+      });
+    });
+
+    // Always include the current page (checked by default).
+    if (!seen.has(location.pathname + location.search)) {
+      links.unshift({
+        url: here + location.search,
+        text: document.title || location.pathname,
+        sameSection: true,
+      });
+    }
+
+    return {
+      ok: true,
+      origin,
+      baseSegment,
+      pageTitle: document.title || origin,
+      current: here,
+      fromNav,
+      links,
+    };
+  } catch (err) {
+    return { ok: false, error: String(err && err.message ? err.message : err) };
+  }
+}

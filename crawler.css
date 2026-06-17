@@ -1,0 +1,155 @@
+:root {
+  --bg: #0f1117;
+  --panel: #171a23;
+  --border: #262b38;
+  --text: #e6e8ee;
+  --muted: #9aa3b2;
+  --accent: #4f8cff;
+  --accent-hover: #3b78f0;
+  --ok: #3ecf8e;
+  --err: #ff6b6b;
+  --warn: #ffcc66;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+header {
+  padding: 20px 28px 10px;
+  max-width: 920px;
+  margin: 0 auto;
+}
+
+h1 { margin: 0; font-size: 20px; }
+.subtitle { margin: 4px 0 0; color: var(--muted); font-size: 13px; word-break: break-all; }
+
+main {
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 8px 28px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px 18px;
+}
+
+.controls {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  margin-bottom: 14px;
+}
+
+.field { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 200px; }
+.field.small { flex: 0 0 140px; min-width: 140px; }
+.field span { color: var(--muted); font-size: 12px; }
+
+input[type="text"], input[type="number"] {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  padding: 8px 10px;
+  font-size: 13px;
+  outline: none;
+}
+input:focus { border-color: var(--accent); }
+
+.checkbox { display: flex; align-items: center; gap: 8px; color: var(--muted); cursor: pointer; }
+code { background: var(--bg); padding: 1px 5px; border-radius: 4px; font-size: 12px; }
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0 6px;
+  border-top: 1px solid var(--border);
+}
+.toolbar .spacer { flex: 1; }
+#selCount { color: var(--muted); font-size: 13px; }
+
+button.primary {
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 9px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+button.primary:hover:not(:disabled) { background: var(--accent-hover); }
+button.primary:disabled { opacity: 0.6; cursor: progress; }
+
+button.link {
+  background: none;
+  border: none;
+  color: var(--accent);
+  cursor: pointer;
+  font-size: 13px;
+  padding: 4px 6px;
+}
+button.link:hover { text-decoration: underline; }
+
+.hint { color: var(--muted); font-size: 12px; margin: 6px 0 10px; }
+
+.link-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 46vh;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+.link-list li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 12px;
+  border-bottom: 1px solid var(--border);
+}
+.link-list li:last-child { border-bottom: none; }
+.link-list li.off { display: none; }
+.link-list .meta { display: flex; flex-direction: column; min-width: 0; }
+.link-list .ltext { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.link-list .lurl { color: var(--muted); font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.badge { font-size: 10px; color: var(--warn); border: 1px solid var(--warn); border-radius: 4px; padding: 0 5px; margin-left: auto; flex: none; }
+
+.progress-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
+#progressCount { color: var(--muted); font-size: 13px; }
+.bar { height: 8px; background: var(--bg); border-radius: 6px; overflow: hidden; border: 1px solid var(--border); }
+.bar-fill { height: 100%; width: 0%; background: var(--accent); transition: width 0.25s ease; }
+
+.status { margin-top: 12px; font-size: 13px; padding: 9px 11px; border-radius: 6px; background: var(--bg); border: 1px solid var(--border); }
+.status.ok { color: var(--ok); border-color: var(--ok); }
+.status.err { color: var(--err); border-color: var(--err); }
+
+.log {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  max-height: 40vh;
+  overflow-y: auto;
+  font-size: 12px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+.log li { padding: 2px 0; color: var(--muted); }
+.log li.ok { color: var(--ok); }
+.log li.err { color: var(--err); }
+.log li.skip { color: var(--warn); }

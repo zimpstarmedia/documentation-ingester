@@ -1,9 +1,10 @@
 import { htmlToMarkdown } from "./html2md.js";
 import { createZip } from "./zip.js";
-import { extractPageSections } from "./extractor.js";
+import { extractPageSections, collectSidebarLinks } from "./extractor.js";
 
 const els = {
   btn: document.getElementById("ingestBtn"),
+  crawlBtn: document.getElementById("crawlBtn"),
   folderName: document.getElementById("folderName"),
   includeRaw: document.getElementById("includeRaw"),
   status: document.getElementById("status"),
@@ -146,3 +147,50 @@ async function run() {
 }
 
 els.btn.addEventListener("click", run);
+
+// --- Crawl whole section: gather sidebar links, hand off to the crawler tab ---
+async function startCrawl() {
+  els.crawlBtn.disabled = true;
+  setStatus("Scanning sidebar for doc links…");
+  try {
+    const tab = await getActiveTab();
+    if (!tab || !tab.id) throw new Error("No active tab found.");
+    if (/^(chrome|edge|about|chrome-extension):/.test(tab.url || "")) {
+      throw new Error("Open a real docs page first.");
+    }
+
+    const [injection] = await chrome.scripting.executeScript({
+      target: { tabId: tab.id },
+      func: collectSidebarLinks,
+    });
+    const result = injection && injection.result;
+    if (!result || !result.ok) {
+      throw new Error((result && result.error) || "Could not read links.");
+    }
+    if (!result.links.length) {
+      throw new Error("No links found on this page.");
+    }
+
+    await chrome.storage.local.set({
+      crawlJob: {
+        origin: result.origin,
+        baseSegment: result.baseSegment,
+        pageTitle: result.pageTitle,
+        current: result.current,
+        fromNav: result.fromNav,
+        folderHint: els.folderName.value || "",
+        includeRaw: els.includeRaw.checked,
+        links: result.links,
+        createdAt: Date.now(),
+      },
+    });
+
+    await chrome.tabs.create({ url: chrome.runtime.getURL("crawler.html") });
+    window.close(); // hand off to the crawler page
+  } catch (err) {
+    setStatus("Error: " + (err && err.message ? err.message : String(err)), "err");
+    els.crawlBtn.disabled = false;
+  }
+}
+
+els.crawlBtn.addEventListener("click", startCrawl);

@@ -30,10 +30,14 @@ When you click the extension's button on a documentation page, it:
 | `activeTab` | To read the page you are currently viewing, only when you click the button. |
 | `scripting` | To run the content-extraction logic on that page. |
 | `downloads` | To save the generated ZIP file to your Downloads folder. |
+| `storage` | To pass the list of pages to crawl from the popup to the crawler tab, locally. It holds no personal data and is cleared after each crawl. |
+| Host access (optional) | Only when you use "Crawl whole section," and only for the site you are on, so the extension can open that site's pages in a background tab and read them. You are prompted to grant this each time, and it is never requested up front. |
 
 The page content the extension reads is used solely to produce your Markdown
-files on your own device. It is never stored by the extension after the ZIP is
-created, and never leaves your computer.
+files on your own device. When crawling multiple pages, those pages are loaded
+in your own browser using your existing session and read locally. Nothing read
+by the extension is ever stored after the ZIP is created, and nothing ever
+leaves your computer.
 
 ## Contact
 

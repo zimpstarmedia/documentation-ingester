@@ -105,6 +105,28 @@ button.primary:disabled {
   cursor: progress;
 }
 
+button.secondary {
+  background: transparent;
+  color: var(--accent);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 9px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+button.secondary:hover:not(:disabled) {
+  border-color: var(--accent);
+  background: rgba(79, 140, 255, 0.08);
+}
+
+button.secondary:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
 .status {
   font-size: 12px;
   padding: 8px 10px;

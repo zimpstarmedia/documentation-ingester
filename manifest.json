@@ -1,9 +1,10 @@
 {
   "manifest_version": 3,
   "name": "403 Whisperer — Docs to Markdown for AI",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Turn any docs page into clean, RAG-ready Markdown for AI. Beat 403/Cloudflare blocks, stale versions & missing context. 100% local.",
-  "permissions": ["activeTab", "scripting", "downloads"],
+  "permissions": ["activeTab", "scripting", "downloads", "storage"],
+  "optional_host_permissions": ["*://*/*"],
   "action": {
     "default_title": "403 Whisperer — ingest this docs page",
     "default_popup": "popup.html",
