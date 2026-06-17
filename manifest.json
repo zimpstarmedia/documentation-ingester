@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Documentation Ingester",
   "version": "1.0.0",
-  "description": "Ingest the current documentation page, split it into clean Markdown sections, and download everything (plus an index) as a ZIP.",
+  "description": "Turn any docs page into clean, RAG-ready Markdown for AI. Beat 403/Cloudflare blocks, stale versions & missing context. 100% local.",
   "permissions": ["activeTab", "scripting", "downloads"],
   "action": {
     "default_title": "Ingest this documentation page",

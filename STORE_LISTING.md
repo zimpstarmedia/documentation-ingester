@@ -5,10 +5,10 @@ Paste these into the Developer Dashboard fields. Everything here is ready to use
 ---
 
 ## Product name
-Documentation Ingester
+Documentation Ingester — Docs to Markdown for AI
 
 ## Summary (132 char max)
-Save any docs page as clean Markdown — auto-split into sections with an index, downloaded as a ZIP. No accounts, no tracking.
+Turn any docs page into clean, RAG-ready Markdown for AI. Beat 403/Cloudflare blocks, stale versions & missing context. 100% local.
 
 ## Category
 Developer Tools
@@ -20,9 +20,18 @@ English (United States)
 
 ## Description (paste into "Description")
 
-Documentation Ingester turns any documentation page into a tidy set of Markdown files with one click.
+Tired of pointing your AI tools at documentation they can't actually read? Cloudflare 403s, login walls, and JavaScript-heavy pages mean your assistant often grabs the wrong version, an outdated cache, or nothing at all — and then confidently gives you answers based on docs it never saw.
 
-When you click the toolbar button, it reads the current page, splits it into sections at each top-level heading (H1/H2), converts each section to clean Markdown, and downloads everything — plus an index.md that summarizes each part — as a single ZIP.
+Documentation Ingester fixes that. With one click it captures the docs page you're actually looking at, splits it into clean Markdown sections, and downloads the whole thing as a ZIP you can drop straight into your AI workflow. Think of it as a quick way to build your own RAG source from any docs — so your assistant works from the real, current docs instead of guessing.
+
+THE PROBLEM IT SOLVES
+• AI tools hit 403 / Cloudflare blocks and can't fetch the page
+• They read a stale or wrong version from their training data or cache
+• They can't find the docs for a niche or internal library at all
+• You end up copy-pasting docs by hand to give the model context
+
+HOW IT HELPS
+You're already authenticated and looking at the right page in your browser — so the extension reads exactly what you see and hands you clean, current Markdown. Feed those files to ChatGPT, Claude, Cursor, a local model, or any RAG pipeline for accurate, grounded answers about the libraries and APIs you actually use.
 
 WHAT YOU GET
 • index.md — an overview with a linked table of contents and a one-line summary of each section
@@ -31,15 +40,17 @@ WHAT YOU GET
 
 WHY YOU'LL LIKE IT
 • One click — no setup, no copy-paste
+• Works on pages AI fetchers can't reach — you've already passed the Cloudflare check and any login
 • Smart content detection — strips navigation, sidebars, and footers automatically
 • Works on JavaScript-rendered docs (reads the live page)
 • 100% local — no accounts, no servers, no tracking, no network requests
 • No external libraries; everything runs inside the extension
 
 PERFECT FOR
-• Feeding documentation into AI tools and note systems
+• Giving AI assistants accurate, current context for the docs you rely on
+• Building a personal RAG knowledge base from custom, internal, or niche docs
+• Capturing docs behind Cloudflare, logins, or heavy JavaScript
 • Offline reading and archiving
-• Building a personal knowledge base from docs you rely on
 
 HOW TO USE
 1. Open a documentation page
