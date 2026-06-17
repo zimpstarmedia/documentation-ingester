@@ -37,4 +37,4 @@ created, and never leaves your computer.
 
 ## Contact
 
-Questions about this policy can be sent to: simon.hagert@ica.se
+Questions about this policy can be sent to: zimpstarmedia@gmail.com
