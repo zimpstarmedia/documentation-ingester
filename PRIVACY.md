@@ -1,10 +1,10 @@
-# Privacy Policy — Documentation Ingester
+# Privacy Policy — 403 Whisperer
 
 _Last updated: 2026-06-17_
 
 ## Summary
 
-**Documentation Ingester does not collect, store, transmit, or share any
+**403 Whisperer does not collect, store, transmit, or share any
 personal data.** Everything the extension does happens locally in your browser.
 
 ## What the extension does

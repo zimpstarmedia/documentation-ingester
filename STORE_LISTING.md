@@ -5,7 +5,7 @@ Paste these into the Developer Dashboard fields. Everything here is ready to use
 ---
 
 ## Product name
-Documentation Ingester — Docs to Markdown for AI
+403 Whisperer — Docs to Markdown for AI
 
 ## Summary (132 char max)
 Turn any docs page into clean, RAG-ready Markdown for AI. Beat 403/Cloudflare blocks, stale versions & missing context. 100% local.
@@ -22,7 +22,7 @@ English (United States)
 
 Tired of pointing your AI tools at documentation they can't actually read? Cloudflare 403s, login walls, and JavaScript-heavy pages mean your assistant often grabs the wrong version, an outdated cache, or nothing at all — and then confidently gives you answers based on docs it never saw.
 
-Documentation Ingester fixes that. With one click it captures the docs page you're actually looking at, splits it into clean Markdown sections, and downloads the whole thing as a ZIP you can drop straight into your AI workflow. Think of it as a quick way to build your own RAG source from any docs — so your assistant works from the real, current docs instead of guessing.
+403 Whisperer fixes that. With one click it captures the docs page you're actually looking at, splits it into clean Markdown sections, and downloads the whole thing as a ZIP you can drop straight into your AI workflow. Think of it as a quick way to build your own RAG source from any docs — so your assistant works from the real, current docs instead of guessing.
 
 THE PROBLEM IT SOLVES
 • AI tools hit 403 / Cloudflare blocks and can't fetch the page
@@ -54,7 +54,7 @@ PERFECT FOR
 
 HOW TO USE
 1. Open a documentation page
-2. Click the Documentation Ingester icon
+2. Click the 403 Whisperer icon
 3. (Optional) name the output folder
 4. Click "Ingest this page → ZIP"
 5. Unzip the file from your Downloads folder

@@ -1,4 +1,4 @@
-# 📚 Documentation Ingester (Chrome Extension)
+# 🤫 403 Whisperer — Docs to Markdown for AI (Chrome Extension)
 
 Turn any documentation page into a tidy set of Markdown files. Click the
 toolbar button and the extension reads the current page, splits it into sections
