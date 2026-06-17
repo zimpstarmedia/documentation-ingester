@@ -24,8 +24,12 @@
           <input id="settleMs" type="number" value="1500" min="300" step="100" />
         </label>
         <label class="checkbox">
+          <input id="includeCombined" type="checkbox" />
+          <span>Combined <code>.md</code></span>
+        </label>
+        <label class="checkbox">
           <input id="includeRaw" type="checkbox" />
-          <span>Include raw <code>.html</code></span>
+          <span>Raw <code>.html</code></span>
         </label>
       </div>
 
@@ -49,6 +53,7 @@
       <div class="progress-head">
         <strong id="progressTitle">Crawling…</strong>
         <span id="progressCount"></span>
+        <button id="cancelBtn" class="link">Cancel</button>
       </div>
       <div class="bar"><div id="barFill" class="bar-fill"></div></div>
       <div id="status" class="status" hidden></div>

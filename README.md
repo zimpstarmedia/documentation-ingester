@@ -7,6 +7,12 @@ downloads everything — plus an `index.md` describing each part — as a single
 
 No build step, no external libraries, fully offline. Manifest V3.
 
+Every `.md` includes **YAML frontmatter** (`title`, `source`, `retrieved`,
+`tokens_est`) so the files drop straight into RAG pipelines and AI tools with
+citations intact. The UI and `index.md` show a **token estimate** so you know
+whether a capture fits a model's context window. Tick **"combined `.md`"** to
+also get one merged file for pasting directly into an LLM.
+
 ## What you get
 
 ```
@@ -62,6 +68,7 @@ rendered docs behind Cloudflare, where every "page" is one SPA route. The
 ```
 
 Notes:
+- **Cancel** anytime mid-crawl — you still get a ZIP of the pages captured so far.
 - **Page load wait (ms):** background tabs can render slowly. If a page comes
   back empty, raise this (e.g. 3000) and re-crawl.
 - The crawl uses a single reusable background tab and runs sequentially to stay

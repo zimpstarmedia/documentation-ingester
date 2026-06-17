@@ -1,17 +1,20 @@
 import { htmlToMarkdown } from "./html2md.js";
 import { createZip } from "./zip.js";
 import { extractPageSections } from "./extractor.js";
+import { slugify, cleanTitle, summarize, estimateTokens, formatCount, frontmatter } from "./mdutil.js";
 
 const els = {
   sourceLine: document.getElementById("sourceLine"),
   folderName: document.getElementById("folderName"),
   settleMs: document.getElementById("settleMs"),
   includeRaw: document.getElementById("includeRaw"),
+  includeCombined: document.getElementById("includeCombined"),
   selCount: document.getElementById("selCount"),
   selAll: document.getElementById("selAll"),
   selNone: document.getElementById("selNone"),
   selSection: document.getElementById("selSection"),
   startBtn: document.getElementById("startBtn"),
+  cancelBtn: document.getElementById("cancelBtn"),
   permHint: document.getElementById("permHint"),
   linkList: document.getElementById("linkList"),
   progressPanel: document.getElementById("progressPanel"),
@@ -23,30 +26,10 @@ const els = {
 };
 
 let job = null;
+let cancelled = false;
 
 // ---------- helpers ----------
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-
-function slugify(text, fallback) {
-  const s = (text || "")
-    .toLowerCase()
-    .normalize("NFKD")
-    .replace(/[̀-ͯ]/g, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 60);
-  return s || fallback;
-}
-
-function summarize(markdown) {
-  for (const line of markdown.split("\n")) {
-    const t = line.trim();
-    if (!t || t.startsWith("#") || t.startsWith("```") || t.startsWith("|")) continue;
-    const clean = t.replace(/[*_`>#-]/g, "").trim();
-    if (clean.length) return clean.length > 160 ? clean.slice(0, 157) + "…" : clean;
-  }
-  return "(no description)";
-}
 
 function pageMarkdown(res) {
   return res.sections
@@ -86,6 +69,7 @@ function render() {
   els.sourceLine.textContent = `${job.links.length} links found on ${job.origin}${job.fromNav ? " (from sidebar)" : ""}`;
   if (job.folderHint) els.folderName.value = job.folderHint;
   els.includeRaw.checked = !!job.includeRaw;
+  els.includeCombined.checked = !!job.includeCombined;
 
   els.linkList.innerHTML = "";
   job.links.forEach((link, i) => {
@@ -183,9 +167,15 @@ async function startCrawl() {
     return;
   }
 
+  cancelled = false;
+  els.cancelBtn.hidden = false;
+  els.cancelBtn.disabled = false;
+
   const settle = Math.max(300, Number(els.settleMs.value) || 1500);
-  const folder = slugify(els.folderName.value || job.pageTitle || "documentation", "documentation");
+  const siteTitle = cleanTitle(job.pageTitle) || job.origin;
+  const folder = slugify(els.folderName.value || siteTitle, "documentation");
   const now = new Date();
+  const dateStr = now.toISOString().slice(0, 10);
   const total = selected.length;
 
   let crawlTabId = null;
@@ -197,6 +187,7 @@ async function startCrawl() {
     crawlTabId = first.id;
 
     for (let i = 0; i < total; i++) {
+      if (cancelled) { logLine("⏹ Cancelled — finishing with pages captured so far.", "skip"); break; }
       const link = selected[i];
       els.progressTitle.textContent = "Crawling…";
       els.progressCount.textContent = `${i + 1} / ${total}`;
@@ -205,6 +196,7 @@ async function startCrawl() {
       if (i > 0) await chrome.tabs.update(crawlTabId, { url: link.url });
       const loaded = await waitForComplete(crawlTabId, 20000);
       await sleep(settle); // let SPA content hydrate
+      if (cancelled) { logLine("⏹ Cancelled — finishing with pages captured so far.", "skip"); break; }
 
       let res = null;
       try {
@@ -218,7 +210,7 @@ async function startCrawl() {
         continue;
       }
 
-      const title = res.title || link.text || link.url;
+      const title = cleanTitle(res.title) || link.text || link.url;
       const num = String(pages.length + 1).padStart(2, "0");
       let base = `${num}-${slugify(title, "page")}`;
       let name = `${base}.md`;
@@ -227,49 +219,71 @@ async function startCrawl() {
       usedNames.add(name);
 
       const md = pageMarkdown(res);
-      pages.push({ title, url: res.url || link.url, file: name, base, md, sections: res.sections, summary: summarize(md) });
-      logLine(`✓ ${title} — ${res.sections.length} sections${loaded ? "" : " (load timed out, captured anyway)"}`, "ok");
+      const tokens = estimateTokens(md);
+      pages.push({ title, url: res.url || link.url, file: name, base, md, sections: res.sections, summary: summarize(md), tokens });
+      logLine(`✓ ${title} — ${res.sections.length} sections, ~${formatCount(tokens)} tok${loaded ? "" : " (load timed out, captured anyway)"}`, "ok");
     }
 
     if (crawlTabId) { try { await chrome.tabs.remove(crawlTabId); } catch (e) {} }
+    els.cancelBtn.hidden = true;
 
-    if (!pages.length) throw new Error("No pages could be captured.");
+    if (!pages.length) {
+      throw new Error(cancelled ? "Cancelled before any page was captured." : "No pages could be captured.");
+    }
 
-    // Build files.
+    const totalTokens = pages.reduce((s, p) => s + p.tokens, 0);
+
+    // Build files (each page gets RAG-friendly frontmatter).
     const files = [];
+    const combinedParts = [];
     pages.forEach((p) => {
-      files.push({ name: `${folder}/${p.file}`, text: `<!-- source: ${p.url} -->\n\n${p.md}` });
+      const fm = frontmatter({ title: p.title, source: p.url, site: siteTitle, retrieved: dateStr, tokens_est: p.tokens });
+      files.push({ name: `${folder}/${p.file}`, text: fm + p.md });
+      combinedParts.push(`# ${p.title}\n\n_Source: ${p.url}_\n\n${p.md}`);
       if (els.includeRaw.checked) {
         files.push({ name: `${folder}/raw/${p.base}.html`, text: p.sections.map((s) => s.html).join("\n<hr>\n") });
       }
     });
 
-    let index = `# ${job.pageTitle || job.origin}\n\n`;
-    index += `> Crawled from ${job.origin} on ${now.toISOString().slice(0, 10)} · ${pages.length} pages\n\n`;
+    let index = frontmatter({ title: siteTitle, source: job.origin, retrieved: dateStr, pages: pages.length, tokens_est: totalTokens });
+    index += `# ${siteTitle}\n\n`;
+    index += `> Crawled from ${job.origin} on ${dateStr} · ${pages.length} pages · ~${formatCount(totalTokens)} tokens${cancelled ? " (cancelled early)" : ""}\n\n`;
     index += `## Pages\n\n`;
     pages.forEach((p, i) => {
-      index += `${i + 1}. **[${p.title}](./${p.file})** — ${p.summary}\n`;
+      index += `${i + 1}. **[${p.title}](./${p.file})** — ${p.summary} _(~${formatCount(p.tokens)} tok)_\n`;
     });
     index += `\n---\n\n_Generated by 403 Whisperer — Docs to Markdown for AI (Chrome extension)._\n`;
     files.unshift({ name: `${folder}/index.md`, text: index });
+
+    if (els.includeCombined.checked) {
+      const combined = frontmatter({ title: siteTitle, source: job.origin, retrieved: dateStr, pages: pages.length, tokens_est: totalTokens }) +
+        `# ${siteTitle}\n\n_Crawled from ${job.origin} · ${pages.length} pages_\n\n` + combinedParts.join("\n\n---\n\n");
+      files.push({ name: `${folder}/combined.md`, text: combined });
+    }
 
     const blob = createZip(files, now);
     const url = URL.createObjectURL(blob);
     await chrome.downloads.download({ url, filename: `${folder}.zip`, saveAs: false });
 
     els.barFill.style.width = "100%";
-    els.progressTitle.textContent = "Done";
-    setStatus(`✓ Crawled ${pages.length} pages → ${folder}.zip (${files.length} files)`, "ok");
+    els.progressTitle.textContent = cancelled ? "Cancelled" : "Done";
+    setStatus(`${cancelled ? "⏹ Stopped early — saved" : "✓ Crawled"} ${pages.length} pages → ${folder}.zip · ~${formatCount(totalTokens)} tokens`, "ok");
     setTimeout(() => URL.revokeObjectURL(url), 120000);
     chrome.storage.local.remove("crawlJob");
   } catch (err) {
     if (crawlTabId) { try { await chrome.tabs.remove(crawlTabId); } catch (e) {} }
+    els.cancelBtn.hidden = true;
     setStatus("Error: " + (err && err.message ? err.message : String(err)), "err");
     els.startBtn.disabled = false;
   }
 }
 
 els.startBtn.addEventListener("click", startCrawl);
+els.cancelBtn.addEventListener("click", () => {
+  cancelled = true;
+  els.cancelBtn.disabled = true;
+  els.progressTitle.textContent = "Cancelling…";
+});
 
 // ---------- init ----------
 (async () => {
