@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="popup.css" />
+  <title>Documentation Ingester</title>
+</head>
+<body>
+  <header>
+    <h1>📚 Doc Ingester</h1>
+    <p class="subtitle">Split this page into clean Markdown.</p>
+  </header>
+
+  <main>
+    <label class="field">
+      <span>Output folder name</span>
+      <input id="folderName" type="text" placeholder="auto from page title" />
+    </label>
+
+    <label class="checkbox">
+      <input id="includeRaw" type="checkbox" />
+      <span>Also include original <code>.html</code> of each section</span>
+    </label>
+
+    <button id="ingestBtn" class="primary">Ingest this page → ZIP</button>
+
+    <div id="status" class="status" hidden></div>
+
+    <details id="previewWrap" hidden>
+      <summary>Preview detected sections (<span id="sectionCount">0</span>)</summary>
+      <ul id="sectionList"></ul>
+    </details>
+  </main>
+
+  <footer>
+    <span>Saves to your Downloads folder.</span>
+  </footer>
+
+  <script type="module" src="popup.js"></script>
+</body>
+</html>
