@@ -10,43 +10,96 @@ export function extractPageSections() {
       "SCRIPT", "STYLE", "NOSCRIPT", "TEMPLATE", "NAV", "ASIDE",
       "FOOTER", "HEADER", "FORM",
     ]);
+    // Noise to strip from inside the chosen content root. Uses case-insensitive
+    // attribute matching so it survives the varied class names of React/Vue doc
+    // apps (Sidebar, sideBar, TableOfContents, toc, etc.).
     const SKIP_SELECTORS = [
-      "nav", "aside", "footer", "header",
+      "nav", "aside", "footer", "header", "script", "style", "noscript",
+      "template", "button", "form", "iframe", "svg",
       "[role=navigation]", "[role=banner]", "[role=contentinfo]",
-      ".sidebar", ".toc", ".table-of-contents", ".breadcrumb", ".breadcrumbs",
-      ".navbar", ".site-header", ".site-footer", ".edit-page", ".pagination",
-      ".pager", ".next-prev", ".feedback", ".advertisement", ".ad",
-      "[aria-hidden=true]",
+      "[role=search]", "[role=tablist]", "[aria-hidden=true]", "[hidden]",
+      // Sidebars / menus (clearly navigational substrings).
+      '[class*="sidebar" i]', '[class*="side-nav" i]', '[class*="sidenav" i]',
+      '[class*="navbar" i]', '[class*="navmenu" i]', '[class*="nav-menu" i]',
+      '[class*="breadcrumb" i]', '[class*="pagination" i]',
+      // Table-of-contents (avoid matching "protocol": use exact class token).
+      '[class*="table-of-contents" i]', '[class*="tableofcontents" i]',
+      '[class*="on-this-page" i]', '[class*="onthispage" i]', '[class~="toc" i]',
+      // Chrome only — site furniture.
+      '[class*="topbar" i]', '[class*="cookie" i]', '[class*="feedback" i]',
+      '[class*="edit-page" i]', '[class*="editpage" i]', '[class*="skip-link" i]',
+      '[id*="sidebar" i]', '[id*="navbar" i]', '[id~="toc" i]',
+      '[data-testid*="sidebar" i]', '[data-testid*="toc" i]',
     ];
 
-    // 1. Pick the most content-rich candidate container.
-    const candidateSelectors = [
-      "main article", "article", "main", "[role=main]",
-      ".markdown-body", ".markdown", ".md-content", ".doc-content",
-      ".documentation", ".content", "#content", ".document", ".rst-content",
-      ".prose", "#main-content",
+    // Link density = fraction of a node's text that sits inside <a> tags.
+    // Navigation/sidebars are ~all links; prose is not. This is the key signal
+    // that lets us tell content apart from menus regardless of class names.
+    const linkDensity = (el) => {
+      const total = (el.textContent || "").trim().length || 1;
+      let linked = 0;
+      el.querySelectorAll("a").forEach((a) => { linked += (a.textContent || "").length; });
+      return linked / total;
+    };
+
+    // 1a. Try explicit content containers used by common doc platforms, in
+    //     priority order. Accept the first that has real prose (low link density).
+    const explicitSelectors = [
+      "main article", "[role=main] article", "article[role=main]",
+      ".theme-doc-markdown", ".docMainContainer", ".docItemContainer",   // Docusaurus
+      "#content-area", ".prose-content", ".mdx-content",                  // Mintlify
+      ".rm-Guides", ".rm-Article", ".markdown-body", ".content-body",     // ReadMe.io
+      ".vp-doc", ".VPDoc .content-container",                             // VitePress
+      ".nextra-content", "main .nextra-content",                          // Nextra
+      ".sl-prose", ".sl-markdown-viewer", ".api-content",                 // Stoplight/Redoc
+      ".page-inner", "[data-testid='page.contentEditor']",               // GitBook
+      ".document .body", ".rst-content .document",                        // Sphinx/RTD
+      ".markdown", ".md-content__inner", ".doc-content", ".documentation",
+      "main", "[role=main]", "article", ".content", "#content",
+      "#main-content", ".main-content",
     ];
     let root = null;
-    let best = 0;
-    for (const sel of candidateSelectors) {
+    for (const sel of explicitSelectors) {
+      let chosen = null;
       document.querySelectorAll(sel).forEach((el) => {
-        const len = (el.innerText || "").trim().length;
-        if (len > best) {
-          best = len;
-          root = el;
+        const len = (el.textContent || "").trim().length;
+        if (len > 400 && linkDensity(el) < 0.5) {
+          if (!chosen || len > (chosen.textContent || "").length) chosen = el;
         }
       });
+      if (chosen) { root = chosen; break; }
     }
-    if (!root || best < 100) root = document.body;
+
+    // 1b. Fallback: Readability-style scan. Score content blocks, bubble the
+    //     score up to parents, then pick the node with the best score after a
+    //     link-density penalty. This finds the main column even in bespoke
+    //     layouts where no known selector matches.
+    if (!root) {
+      const scores = new Map();
+      const add = (el, s) => { if (el) scores.set(el, (scores.get(el) || 0) + s); };
+      document.querySelectorAll("p, pre, blockquote, h1, h2, h3, td, li").forEach((node) => {
+        const txt = (node.textContent || "").trim();
+        if (txt.length < 25) return;
+        const base = 1 + Math.min(Math.floor(txt.length / 100), 3) + (txt.match(/[,.;]/g) || []).length * 0.2;
+        const p = node.parentElement;
+        const gp = p && p.parentElement;
+        add(p, base);
+        add(gp, base / 2);
+      });
+      let bestScore = 0;
+      scores.forEach((s, el) => {
+        const adjusted = s * (1 - Math.min(linkDensity(el), 0.95));
+        if (adjusted > bestScore) { bestScore = adjusted; root = el; }
+      });
+    }
+
+    if (!root || (root.textContent || "").trim().length < 80) root = document.body;
 
     // 2. Clone and strip noise.
     const clone = root.cloneNode(true);
     SKIP_SELECTORS.forEach((sel) => {
-      clone.querySelectorAll(sel).forEach((el) => el.remove());
+      try { clone.querySelectorAll(sel).forEach((el) => el.remove()); } catch (e) {}
     });
-    clone.querySelectorAll("script, style, noscript, template, button").forEach(
-      (el) => el.remove()
-    );
 
     // 3. Resolve relative URLs to absolute so links/images survive offline.
     clone.querySelectorAll("a[href]").forEach((a) => {
